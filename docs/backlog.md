@@ -26,10 +26,10 @@ as new backlog rows tagged `[feedback]`.
 
 ## Sprint 2 (planned)
 
-- [ ] FastAPI data service: order ingest + PostgreSQL warehouse schema
-- [ ] Elasticsearch product index + search endpoint
-- [ ] React dashboard shell: revenue, orders, top products (per tenant)
-- [ ] Demo data generator (NexusCommerce-shaped orders)
+- [x] FastAPI data service: order ingest + PostgreSQL warehouse schema
+- [x] Elasticsearch product index + search endpoint
+- [x] React dashboard shell: revenue, orders, top products (per tenant)
+- [x] Demo data generator (NexusCommerce-shaped orders)
 
 ## Icebox
 

@@ -33,6 +33,17 @@ def create_app(settings: Settings | None = None, search: SearchIndex | None = No
 
     app = FastAPI(title="InsightBoard Data API", version="1.0")
 
+    # Dev-time CORS for the dashboard dev server (any localhost port);
+    # in production both sit behind one origin.
+    from fastapi.middleware.cors import CORSMiddleware
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     def db():
         with session_factory() as session:
             yield session

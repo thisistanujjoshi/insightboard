@@ -21,6 +21,20 @@ jobs:
           pip install -e ".[dev]"
           python -m pytest -q
 
+  dashboard:
+    name: Dashboard build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install & build
+        working-directory: src/dashboard
+        run: |
+          npm ci
+          npm run build
+
   admin:
     name: Admin back office build & test
     runs-on: ubuntu-latest
