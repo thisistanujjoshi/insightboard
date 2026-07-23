@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  fetchRevenueDaily, fetchSummary, fetchTopProducts,
-  type DailyRevenue, type Summary, type TopProduct,
+  fetchAnomalies, fetchForecast, fetchRevenueDaily, fetchSummary, fetchTopProducts,
+  type Anomaly, type DailyRevenue, type Forecast, type Summary, type TopProduct,
 } from "./api";
 import RevenueChart from "./components/RevenueChart";
 import TopProducts from "./components/TopProducts";
+import FeedbackWidget from "./components/FeedbackWidget";
 
 export default function App() {
   const [tenant, setTenant] = useState("demo");
@@ -12,15 +13,18 @@ export default function App() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [daily, setDaily] = useState<DailyRevenue[]>([]);
   const [top, setTop] = useState<TopProduct[]>([]);
+  const [forecast, setForecast] = useState<Forecast | null>(null);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (t: string) => {
     setError(null);
     try {
-      const [s, d, p] = await Promise.all([
+      const [s, d, p, f, a] = await Promise.all([
         fetchSummary(t), fetchRevenueDaily(t), fetchTopProducts(t),
+        fetchForecast(t), fetchAnomalies(t),
       ]);
-      setSummary(s); setDaily(d); setTop(p);
+      setSummary(s); setDaily(d); setTop(p); setForecast(f); setAnomalies(a);
     } catch {
       setError("Data service unavailable — is it running on port 8000?");
     }
@@ -69,7 +73,7 @@ export default function App() {
             </p>
           ) : (
             <>
-              <RevenueChart data={daily} />
+              <RevenueChart data={daily} forecast={forecast} anomalies={anomalies} />
               <TopProducts data={top} />
             </>
           )}
@@ -77,6 +81,8 @@ export default function App() {
       )}
 
       <footer>InsightBoard — analytics for small shops. Data: FastAPI + PostgreSQL warehouse.</footer>
+
+      {summary && !error && <FeedbackWidget tenant={tenant} />}
     </div>
   );
 }

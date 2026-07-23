@@ -29,10 +29,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install & build
+      - name: Install, test & build
         working-directory: src/dashboard
         run: |
           npm ci
+          npm run test
           npm run build
 
   admin:

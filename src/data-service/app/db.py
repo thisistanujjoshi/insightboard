@@ -7,7 +7,7 @@ dev/tests; PostgreSQL in real deployments via INSIGHT_DATABASE_URL.
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, Numeric, String, create_engine
+from sqlalchemy import DateTime, Index, Numeric, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 
@@ -28,6 +28,21 @@ class OrderLine(Base):
     unit_price: Mapped[float] = mapped_column(Numeric(18, 2))
 
     __table_args__ = (Index("ix_tenant_date", "tenant_id", "placed_at"),)
+
+
+class Feedback(Base):
+    """In-app feedback submissions — feeds the product backlog (see docs/backlog.md)
+    and doubles as the A/B test's outcome measure (which widget `variant` converts).
+    """
+
+    __tablename__ = "feedback"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    variant: Mapped[str] = mapped_column(String(16))       # "sidebar" | "footer" — the A/B arm
+    rating: Mapped[str] = mapped_column(String(16))        # "up" | "down"
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 def make_session_factory(database_url: str) -> sessionmaker:

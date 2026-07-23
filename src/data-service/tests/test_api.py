@@ -64,3 +64,41 @@ async def test_ingest_rejects_bad_quantity():
     bad = [dict(LINES[0], quantity=0)]
     async with make_client() as c:
         assert (await c.post("/api/v1/tenants/t1/orders", json=bad)).status_code == 422
+
+
+async def test_forecast_degrades_gracefully_for_sparse_tenant():
+    async with make_client() as c:
+        await c.post("/api/v1/tenants/t1/orders", json=LINES)  # 2 distinct days
+        forecast = (await c.get("/api/v1/tenants/t1/forecast")).json()
+
+    assert forecast["method"] == "moving_average"
+    assert forecast["confidence"] == "low"
+    assert len(forecast["points"]) == 14
+
+
+async def test_anomalies_empty_for_sparse_tenant():
+    async with make_client() as c:
+        await c.post("/api/v1/tenants/t1/orders", json=LINES)
+        anomalies = (await c.get("/api/v1/tenants/t1/anomalies")).json()
+
+    assert anomalies == []
+
+
+async def test_feedback_submit_and_stats_roundtrip():
+    async with make_client() as c:
+        up = await c.post("/api/v1/tenants/t1/feedback",
+                           json={"variant": "sidebar", "rating": "up", "comment": "love the chart"})
+        assert up.status_code == 201
+        await c.post("/api/v1/tenants/t1/feedback", json={"variant": "footer", "rating": "down"})
+
+        stats = (await c.get("/api/v1/tenants/t1/feedback/stats")).json()
+
+    assert stats["sidebar"]["up"] == 1
+    assert stats["footer"]["down"] == 1
+
+
+async def test_feedback_rejects_unknown_variant():
+    async with make_client() as c:
+        response = await c.post("/api/v1/tenants/t1/feedback",
+                                 json={"variant": "banner", "rating": "up"})
+    assert response.status_code == 422

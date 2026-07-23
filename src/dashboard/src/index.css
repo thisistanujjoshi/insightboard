@@ -62,7 +62,20 @@ header button {
   background: var(--surface-2); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px; margin-bottom: 16px;
 }
+.card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .card h2 { font-size: 15px; margin: 0 0 10px; color: var(--text-secondary); font-weight: 600; }
+
+.badge {
+  font-size: 12px; padding: 3px 10px; border-radius: 999px;
+  background: var(--surface-1); border: 1px solid var(--border); color: var(--text-secondary);
+  cursor: default; white-space: nowrap;
+}
+
+.chart-key { display: flex; gap: 16px; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary); }
+.chart-key span { display: inline-flex; align-items: center; gap: 6px; }
+.key-line { width: 16px; height: 0; border-top: 2px solid var(--accent); display: inline-block; }
+.key-line--dashed { border-top-style: dashed; }
+.key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--error); display: inline-block; }
 
 details { margin-top: 8px; }
 summary { color: var(--text-secondary); font-size: 13px; cursor: pointer; }
@@ -73,3 +86,28 @@ th { color: var(--text-secondary); font-weight: 600; }
 .error { color: var(--error); }
 .empty { color: var(--text-secondary); }
 footer { color: var(--text-secondary); font-size: 13px; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 12px; }
+
+/* Feedback widget — placement is the A/B variable under test. */
+.feedback {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+  width: 240px;
+}
+.feedback--sidebar { position: fixed; right: 20px; bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.feedback--footer { position: static; margin: 8px auto 0; }
+.feedback-prompt { margin: 0; font-size: 13px; color: var(--text-secondary); }
+.feedback-buttons { display: flex; gap: 8px; }
+.feedback-buttons button {
+  font-size: 18px; padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-1); cursor: pointer;
+}
+.feedback-buttons button.active { border-color: var(--accent); background: var(--surface-2); }
+.feedback textarea {
+  font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); resize: vertical;
+}
+.feedback-submit {
+  align-self: flex-start; padding: 5px 14px; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff; cursor: pointer; font-size: 13px;
+}
+.feedback-thanks { margin: 0; font-size: 13px; color: var(--text-secondary); }

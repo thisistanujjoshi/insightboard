@@ -31,6 +31,18 @@ as new backlog rows tagged `[feedback]`.
 - [x] React dashboard shell: revenue, orders, top products (per tenant)
 - [x] Demo data generator (NexusCommerce-shaped orders)
 
+## Sprint 3 (current)
+
+- [x] Forecast endpoint: scikit-learn trend model, moving-average fallback under 21 days, confidence label
+- [x] Anomaly detection: trailing moving-average baseline + z-score flagging
+- [x] Dashboard: forecast overlay (dashed projection) + anomaly markers on the revenue chart
+- [x] Feedback widget with sidebar/footer A/B placement test, backed by `/feedback` + `/feedback/stats`
+
+## Sprint 4 (planned)
+
+- [ ] Ask-in-English: LLM translates plain English to read-only, tenant-scoped SQL
+- [ ] Role-based authorization; tenant data isolation test gate
+
 ## Icebox
 
 - Email digests · self-serve signup · multi-currency · saved questions
