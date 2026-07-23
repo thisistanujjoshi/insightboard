@@ -5,8 +5,10 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 from sqlalchemy import func, select
 
-from .db import Feedback, OrderLine, make_session_factory
+from .ask_llm import AskLlm, create_ask_llm
+from .db import Feedback, OrderLine, make_engine_bundle
 from .forecast import compute_forecast, detect_anomalies
+from .nlsql import QueryTimeoutError, UnsafeQueryError, enforce_row_limit, run_readonly_query, validate_sql
 from .search import SearchIndex, create_index
 
 
@@ -14,6 +16,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///data.dev.db"
     search: str = "memory"           # memory | elasticsearch
     es_url: str = "http://localhost:9200"
+    ask_llm: str = "stub"             # stub | anthropic
+    ask_model: str = "claude-opus-4-8"
+    max_rows: int = 200
+    query_timeout_seconds: float = 5.0
 
     model_config = {"env_prefix": "INSIGHT_"}
 
@@ -33,10 +39,20 @@ class FeedbackSubmission(BaseModel):
     comment: str | None = Field(default=None, max_length=2000)
 
 
-def create_app(settings: Settings | None = None, search: SearchIndex | None = None) -> FastAPI:
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+
+
+def create_app(
+    settings: Settings | None = None,
+    search: SearchIndex | None = None,
+    ask_llm: AskLlm | None = None,
+) -> FastAPI:
     settings = settings or Settings()
     search = search or create_index(settings.search, settings.es_url)
-    session_factory = make_session_factory(settings.database_url)
+    ask_llm = ask_llm or create_ask_llm(settings.ask_llm, settings.ask_model)
+    bundle = make_engine_bundle(settings.database_url)
+    session_factory = bundle.session_factory
 
     app = FastAPI(title="InsightBoard Data API", version="1.0")
 
@@ -150,6 +166,36 @@ def create_app(settings: Settings | None = None, search: SearchIndex | None = No
         for variant, rating, count in rows:
             stats.setdefault(variant, {"up": 0, "down": 0})[rating] = count
         return stats
+
+    @app.post("/api/v1/tenants/{tenant_id}/ask")
+    async def ask(tenant_id: str, body: AskRequest):
+        raw_sql: str | None = None
+        final_sql: str | None = None
+        try:
+            raw_sql = await ask_llm.generate_sql(body.question)
+            final_sql = enforce_row_limit(validate_sql(raw_sql), settings.max_rows)
+            rows = run_readonly_query(
+                bundle.raw_connect, tenant_id, final_sql,
+                max_rows=settings.max_rows, timeout_seconds=settings.query_timeout_seconds,
+            )
+        except UnsafeQueryError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={"message": str(exc), "sql": final_sql or raw_sql},
+            ) from exc
+        except QueryTimeoutError as exc:
+            raise HTTPException(
+                status_code=504,
+                detail={"message": str(exc), "sql": final_sql or raw_sql},
+            ) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail="The assistant is currently unavailable.") from exc
+        return {
+            "sql": final_sql,
+            "columns": list(rows[0].keys()) if rows else [],
+            "rows": rows,
+            "rowCount": len(rows),
+        }
 
     return app
 

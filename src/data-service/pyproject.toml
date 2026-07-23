@@ -12,6 +12,8 @@ dependencies = [
     "elasticsearch>=8.14",
     "scikit-learn>=1.5",
     "numpy>=1.26",
+    "anthropic>=0.40",
+    "truststore>=0.9",
 ]
 
 [project.optional-dependencies]

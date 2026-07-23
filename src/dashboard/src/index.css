@@ -111,3 +111,22 @@ footer { color: var(--text-secondary); font-size: 13px; margin-top: 24px; border
   background: var(--accent); color: #fff; cursor: pointer; font-size: 13px;
 }
 .feedback-thanks { margin: 0; font-size: 13px; color: var(--text-secondary); }
+
+/* Ask-in-English — the answer is always shown alongside the SQL that
+   produced it, so the guardrails (read-only, tenant-scoped) stay visible
+   rather than trusted blindly. */
+.ask-form { display: flex; gap: 8px; margin-bottom: 10px; }
+.ask-form input {
+  flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface-1); color: var(--text-primary);
+}
+.ask-form button {
+  padding: 6px 14px; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff; cursor: pointer;
+}
+.ask-form button:disabled { opacity: 0.6; cursor: default; }
+.ask-box pre {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; font-size: 12px; overflow-x: auto; white-space: pre-wrap;
+}
+.ask-error { margin-bottom: 8px; }

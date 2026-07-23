@@ -102,3 +102,31 @@ async def test_feedback_rejects_unknown_variant():
         response = await c.post("/api/v1/tenants/t1/feedback",
                                  json={"variant": "banner", "rating": "up"})
     assert response.status_code == 422
+
+
+async def test_ask_stub_mode_returns_sql_and_rows():
+    async with make_client() as c:
+        await c.post("/api/v1/tenants/t1/orders", json=LINES)
+        response = await c.post("/api/v1/tenants/t1/ask", json={"question": "what are the top products?"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "orders" in body["sql"]
+    assert "tenant_id" not in body["sql"].lower()
+    assert body["rowCount"] == len(body["rows"])
+    assert body["rows"][0]["product_name"] == "Mechanical Keyboard"
+
+
+async def test_ask_is_tenant_scoped():
+    async with make_client() as c:
+        await c.post("/api/v1/tenants/t1/orders", json=LINES)
+        other = await c.post("/api/v1/tenants/OTHER/ask", json={"question": "how many orders?"})
+
+    assert other.status_code == 200
+    assert other.json()["rows"] == [{"order_count": 0}]
+
+
+async def test_ask_rejects_empty_question():
+    async with make_client() as c:
+        response = await c.post("/api/v1/tenants/t1/ask", json={"question": ""})
+    assert response.status_code == 422

@@ -38,10 +38,15 @@ as new backlog rows tagged `[feedback]`.
 - [x] Dashboard: forecast overlay (dashed projection) + anomaly markers on the revenue chart
 - [x] Feedback widget with sidebar/footer A/B placement test, backed by `/feedback` + `/feedback/stats`
 
-## Sprint 4 (planned)
+## Sprint 4 (current)
 
-- [ ] Ask-in-English: LLM translates plain English to read-only, tenant-scoped SQL
-- [ ] Role-based authorization; tenant data isolation test gate
+- [x] Ask-in-English: LLM translates plain English to read-only, tenant-scoped SQL
+- [x] Role-based authorization; tenant data isolation test gate
+
+## Sprint 5 (planned)
+
+- [ ] Docker Compose for the full platform (data-service, dashboard, admin)
+- [ ] CI/CD deploy story; feature flags
 
 ## Icebox
 

@@ -1,4 +1,5 @@
 using Admin.Web.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,17 @@ if (!string.Equals(builder.Configuration["Database:Provider"], "InMemory", Strin
     builder.Services.AddDbContext<AdminDbContext>(o =>
         o.UseSqlite(builder.Configuration.GetConnectionString("AdminDb") ?? "Data Source=admin.dev.db"));
 
+// Cookie auth guards tenant management (see docs/backlog.md E4: "role-based
+// authorization"). Demo credentials come from config (Auth:Users), the same
+// pattern NexusCommerce's gateway uses for its demo JWT users.
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/Login";
+    });
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -18,6 +30,7 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

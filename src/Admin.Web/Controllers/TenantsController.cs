@@ -1,10 +1,12 @@
 using Admin.Web.Data;
 using Admin.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Admin.Web.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class TenantsController(AdminDbContext db) : Controller
 {
     public async Task<IActionResult> Index()

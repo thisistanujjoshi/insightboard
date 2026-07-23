@@ -6,6 +6,7 @@ import {
 import RevenueChart from "./components/RevenueChart";
 import TopProducts from "./components/TopProducts";
 import FeedbackWidget from "./components/FeedbackWidget";
+import AskBox from "./components/AskBox";
 
 export default function App() {
   const [tenant, setTenant] = useState("demo");
@@ -77,6 +78,8 @@ export default function App() {
               <TopProducts data={top} />
             </>
           )}
+
+          <AskBox tenant={tenant} />
         </>
       )}
 

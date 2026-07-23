@@ -13,6 +13,13 @@ export interface Anomaly { date: string; revenue: number; expected: number; zSco
 export type FeedbackVariant = "sidebar" | "footer";
 export type FeedbackRating = "up" | "down";
 export interface FeedbackStats { [variant: string]: { up: number; down: number } }
+export interface AskResult {
+  sql: string;
+  columns: string[];
+  rows: Record<string, unknown>[];
+  rowCount: number;
+}
+export interface AskErrorInfo { message: string; sql?: string }
 
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE}${path}`);
@@ -44,3 +51,33 @@ export const submitFeedback = (
   tenant: string, variant: FeedbackVariant, rating: FeedbackRating, comment?: string,
 ) => post<{ id: number }>(`/api/v1/tenants/${encodeURIComponent(tenant)}/feedback`,
   { variant, rating, comment });
+
+// The data service returns rejected/timed-out queries as
+// `{ detail: { message, sql } }` so the UI can still show what SQL was
+// attempted (per the PRD: "show the SQL for trust", even on failure).
+export function parseAskError(body: unknown): AskErrorInfo {
+  const detail = (body as { detail?: unknown } | null)?.detail;
+  if (typeof detail === "string") return { message: detail };
+  if (detail && typeof detail === "object") {
+    const d = detail as { message?: unknown; sql?: unknown };
+    return {
+      message: typeof d.message === "string" ? d.message : "Request failed.",
+      sql: typeof d.sql === "string" ? d.sql : undefined,
+    };
+  }
+  return { message: "Request failed." };
+}
+
+export async function askQuestion(tenant: string, question: string): Promise<AskResult> {
+  const response = await fetch(`${BASE}/api/v1/tenants/${encodeURIComponent(tenant)}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  const body = await response.json();
+  if (!response.ok) {
+    const { message, sql } = parseAskError(body);
+    throw Object.assign(new Error(message), { sql });
+  }
+  return body as AskResult;
+}
