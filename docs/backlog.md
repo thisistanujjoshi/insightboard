@@ -19,10 +19,10 @@ as new backlog rows tagged `[feedback]`.
 - [x] PRD one-pager
 - [x] Personas
 - [x] Backlog + sprint structure
-- [ ] Solution scaffold: ASP.NET Core MVC admin (Razor), layered like the CV expects
-- [ ] Tenant + Plan model, EF Core, seeded demo tenants
-- [ ] Tenant list/create/edit/suspend views + validation + tests
-- [ ] CI on push
+- [x] Solution scaffold: ASP.NET Core MVC admin (Razor), layered like the CV expects
+- [x] Tenant + Plan model, EF Core, seeded demo tenants
+- [x] Tenant list/create/edit/suspend views + validation + tests
+- [x] CI on push
 
 ## Sprint 2 (planned)
 
