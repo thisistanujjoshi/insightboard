@@ -9,24 +9,28 @@ forecasting, and a natural-language "ask a question, get a chart" feature.
 [personas](docs/personas.md), and a [sprint backlog](docs/backlog.md) — the
 build follows the backlog, and in-app feedback feeds back into it.
 
-## Architecture (planned)
+## Architecture
 
 | Piece | Stack | Why |
 |---|---|---|
-| Admin back office | ASP.NET Core **MVC** (Razor views) | Server-rendered CRUD for internal users — deliberately the MVC pattern, vs project 1's API controllers and OpsForge's minimal API |
+| Admin back office | ASP.NET Core **MVC** (Razor views), cookie auth | Server-rendered CRUD for internal users — deliberately the MVC pattern, vs project 1's API controllers and OpsForge's minimal API |
 | Data service | Python FastAPI | Order ingest, warehouse queries, NL→SQL |
-| Warehouse | PostgreSQL + Elasticsearch | Relational analytics + product search |
+| Warehouse | PostgreSQL + Elasticsearch (SQLite/in-memory in dev+tests) | Relational analytics + product search |
 | ML | scikit-learn / pandas | 14-day forecast, daily anomaly flags |
-| Dashboard | React + TypeScript | Charts + feedback widget (A/B tested) |
-| LLM | Claude API | English → guarded, read-only, tenant-scoped SQL |
+| Dashboard | React + TypeScript | Charts + feedback widget (A/B tested) + Ask-in-English |
+| LLM | Claude API (`stub` mode for offline dev/CI) | English → guarded, read-only, tenant-scoped SQL |
+
+Run the whole platform locally: `docker compose up -d` — see
+[docs/deploy.md](docs/deploy.md) for ports, feature flags, and the path to
+a real cluster deploy (reusing OpsForge's Terraform/Helm foundation).
 
 ## Build phases
 
-- [ ] **1** — PRD/personas/backlog ✅ · MVC back office with tenant model
-- [ ] **2** — Data API + warehouse + React dashboard
-- [ ] **3** — Forecasting/anomalies + feedback widget + A/B test
-- [ ] **4** — Ask-in-English (NL→SQL) + role-based authorization
-- [ ] **5** — Docker, CI/CD, feature flags, deploy
+- [x] **1** — PRD/personas/backlog · MVC back office with tenant model
+- [x] **2** — Data API + warehouse + React dashboard
+- [x] **3** — Forecasting/anomalies + feedback widget + A/B test
+- [x] **4** — Ask-in-English (NL→SQL) + role-based authorization
+- [x] **5** — Docker, CI/CD, feature flags, deploy
 
 Part of a 3-project portfolio with
 [nexuscommerce](https://github.com/thisistanujjoshi/nexuscommerce) and

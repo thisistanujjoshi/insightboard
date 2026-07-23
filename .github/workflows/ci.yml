@@ -46,3 +46,41 @@ jobs:
           dotnet-version: "10.0.x"
       - name: Test
         run: dotnet test tests/Admin.Tests -c Release
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build data-service image
+        uses: docker/build-push-action@v6
+        with:
+          context: src/data-service
+          push: false
+      - name: Build dashboard image
+        uses: docker/build-push-action@v6
+        with:
+          context: src/dashboard
+          push: false
+      - name: Build admin image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Admin.Web/Dockerfile
+          push: false
+
+  security-scan:
+    name: Trivy scan (vuln + misconfig)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Report-only for now: surfaces CRITICAL/HIGH vulnerabilities and
+      # Dockerfile/compose misconfigurations in the job log without failing
+      # the build — same posture as OpsForge's scan (see its
+      # docs/pipeline-comparison.md) until a baseline is triaged.
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scanners: vuln,misconfig
+          severity: CRITICAL,HIGH
+          exit-code: 0

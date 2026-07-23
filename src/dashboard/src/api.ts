@@ -20,6 +20,7 @@ export interface AskResult {
   rowCount: number;
 }
 export interface AskErrorInfo { message: string; sql?: string }
+export interface Features { ask: boolean; forecast: boolean }
 
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE}${path}`);
@@ -37,6 +38,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export const fetchFeatures = () => get<Features>("/api/v1/features");
 export const fetchSummary = (tenant: string) =>
   get<Summary>(`/api/v1/tenants/${encodeURIComponent(tenant)}/summary`);
 export const fetchRevenueDaily = (tenant: string) =>

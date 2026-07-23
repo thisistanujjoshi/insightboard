@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     ask_model: str = "claude-opus-4-8"
     max_rows: int = 200
     query_timeout_seconds: float = 5.0
+    # Kill switches: flip off via env, no redeploy, if the LLM cost spikes or
+    # a guardrail issue turns up in the field (see docs/deploy.md).
+    feature_ask: bool = True
+    feature_forecast: bool = True
 
     model_config = {"env_prefix": "INSIGHT_"}
 
@@ -84,6 +88,10 @@ def create_app(
     def health():
         return {"status": "Healthy", "search": settings.search}
 
+    @app.get("/api/v1/features")
+    def features():
+        return {"ask": settings.feature_ask, "forecast": settings.feature_forecast}
+
     @app.post("/api/v1/tenants/{tenant_id}/orders", status_code=202)
     def ingest(tenant_id: str, lines: list[IngestLine], session=Depends(db)):
         for line in lines:
@@ -131,6 +139,8 @@ def create_app(
 
     @app.get("/api/v1/tenants/{tenant_id}/forecast")
     def forecast(tenant_id: str, session=Depends(db)):
+        if not settings.feature_forecast:
+            raise HTTPException(status_code=404, detail="Forecasting is disabled.")
         history = daily_revenue_rows(tenant_id, session)
         result = compute_forecast(history)
         return {
@@ -141,6 +151,8 @@ def create_app(
 
     @app.get("/api/v1/tenants/{tenant_id}/anomalies")
     def anomalies(tenant_id: str, session=Depends(db)):
+        if not settings.feature_forecast:
+            raise HTTPException(status_code=404, detail="Forecasting is disabled.")
         history = daily_revenue_rows(tenant_id, session)
         return [
             {"date": str(a.date), "revenue": a.revenue, "expected": a.expected, "zScore": a.z_score}
@@ -169,6 +181,8 @@ def create_app(
 
     @app.post("/api/v1/tenants/{tenant_id}/ask")
     async def ask(tenant_id: str, body: AskRequest):
+        if not settings.feature_ask:
+            raise HTTPException(status_code=404, detail="Ask-in-English is disabled.")
         raw_sql: str | None = None
         final_sql: str | None = None
         try:
@@ -188,6 +202,8 @@ def create_app(
                 status_code=504,
                 detail={"message": str(exc), "sql": final_sql or raw_sql},
             ) from exc
+        except NotImplementedError as exc:
+            raise HTTPException(status_code=501, detail=str(exc)) from exc
         except Exception as exc:
             raise HTTPException(status_code=502, detail="The assistant is currently unavailable.") from exc
         return {

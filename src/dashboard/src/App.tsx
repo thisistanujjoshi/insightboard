@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  fetchAnomalies, fetchForecast, fetchRevenueDaily, fetchSummary, fetchTopProducts,
-  type Anomaly, type DailyRevenue, type Forecast, type Summary, type TopProduct,
+  fetchAnomalies, fetchFeatures, fetchForecast, fetchRevenueDaily, fetchSummary, fetchTopProducts,
+  type Anomaly, type DailyRevenue, type Features, type Forecast, type Summary, type TopProduct,
 } from "./api";
 import RevenueChart from "./components/RevenueChart";
 import TopProducts from "./components/TopProducts";
@@ -16,16 +16,18 @@ export default function App() {
   const [top, setTop] = useState<TopProduct[]>([]);
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [features, setFeatures] = useState<Features | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (t: string) => {
     setError(null);
     try {
-      const [s, d, p, f, a] = await Promise.all([
-        fetchSummary(t), fetchRevenueDaily(t), fetchTopProducts(t),
-        fetchForecast(t), fetchAnomalies(t),
-      ]);
-      setSummary(s); setDaily(d); setTop(p); setForecast(f); setAnomalies(a);
+      const feats = await fetchFeatures();
+      const [s, d, p] = await Promise.all([fetchSummary(t), fetchRevenueDaily(t), fetchTopProducts(t)]);
+      const [f, a] = feats.forecast
+        ? await Promise.all([fetchForecast(t), fetchAnomalies(t)])
+        : [null, []];
+      setFeatures(feats); setSummary(s); setDaily(d); setTop(p); setForecast(f); setAnomalies(a);
     } catch {
       setError("Data service unavailable — is it running on port 8000?");
     }
@@ -79,7 +81,7 @@ export default function App() {
             </>
           )}
 
-          <AskBox tenant={tenant} />
+          {features?.ask && <AskBox tenant={tenant} />}
         </>
       )}
 

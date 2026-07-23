@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/.venv/
+**/dist/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/*.egg-info/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.git/
+.vs/

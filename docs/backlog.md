@@ -43,11 +43,16 @@ as new backlog rows tagged `[feedback]`.
 - [x] Ask-in-English: LLM translates plain English to read-only, tenant-scoped SQL
 - [x] Role-based authorization; tenant data isolation test gate
 
-## Sprint 5 (planned)
+## Sprint 5 (current)
 
-- [ ] Docker Compose for the full platform (data-service, dashboard, admin)
-- [ ] CI/CD deploy story; feature flags
+- [x] Docker Compose for the full platform (data-service on Postgres + Elasticsearch, dashboard, admin)
+- [x] CI: image builds + report-only Trivy scan
+- [x] Feature flags (`/features`, kill switches for Ask-in-English and forecasting)
+- [x] Deploy story (`docs/deploy.md`)
 
 ## Icebox
 
 - Email digests · self-serve signup · multi-currency · saved questions
+- Ask-in-English's read-only guardrail is SQLite-only (`app/nlsql.py`); a
+  PostgreSQL deployment needs the equivalent dedicated read-only role +
+  `SET statement_timeout` path — see `docs/deploy.md`

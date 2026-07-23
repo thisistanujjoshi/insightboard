@@ -130,3 +130,31 @@ async def test_ask_rejects_empty_question():
     async with make_client() as c:
         response = await c.post("/api/v1/tenants/t1/ask", json={"question": ""})
     assert response.status_code == 422
+
+
+async def test_features_reports_defaults():
+    async with make_client() as c:
+        response = await c.get("/api/v1/features")
+    assert response.json() == {"ask": True, "forecast": True}
+
+
+async def test_ask_disabled_via_feature_flag():
+    app = create_app(
+        settings=Settings(database_url="sqlite://", search="memory", feature_ask=False),
+        search=InMemorySearchIndex(),
+    )
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
+        response = await c.post("/api/v1/tenants/t1/ask", json={"question": "top products?"})
+    assert response.status_code == 404
+
+
+async def test_forecast_and_anomalies_disabled_via_feature_flag():
+    app = create_app(
+        settings=Settings(database_url="sqlite://", search="memory", feature_forecast=False),
+        search=InMemorySearchIndex(),
+    )
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
+        forecast_response = await c.get("/api/v1/tenants/t1/forecast")
+        anomalies_response = await c.get("/api/v1/tenants/t1/anomalies")
+    assert forecast_response.status_code == 404
+    assert anomalies_response.status_code == 404

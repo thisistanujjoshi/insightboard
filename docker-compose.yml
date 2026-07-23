@@ -1,0 +1,92 @@
+# Full InsightBoard platform, containerised.
+#
+#   docker compose build           # build all service images
+#   docker compose up -d           # run the whole platform
+#   docker compose down            # stop everything
+#
+# Host ports match the local-dev ports so the browser bundles work unchanged.
+# The data service runs against a real Postgres warehouse + Elasticsearch here
+# (the "small tenant scale" SQLite path is still what dev/tests use — see
+# src/data-service/app/db.py). Ask-in-English defaults to the stub LLM so the
+# stack runs with no API key; set INSIGHT_ASK_LLM=anthropic and ANTHROPIC_API_KEY
+# in a .env file to use the real Claude API. Admin.Web keeps SQLite (a tenant
+# registry, not the warehouse) — same "vary the data store" choice as
+# NexusCommerce's Catalog service.
+#
+# Dev-only credentials throughout — real deployments would provision these
+# from a secrets manager and reuse OpsForge's Terraform/Helm foundation
+# (see docs/deploy.md) rather than hand-rolling infra per project.
+
+name: insightboard
+
+services:
+  # ---- Backing infrastructure -------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: insightboard
+      POSTGRES_USER: insight
+      POSTGRES_PASSWORD: insight_dev_pw
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insight -d insightboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
+  # ---- Application services ----------------------------------------------------
+  data-service:
+    build:
+      context: src/data-service
+    image: insightboard/data-service:latest
+    environment:
+      INSIGHT_DATABASE_URL: "postgresql+psycopg://insight:insight_dev_pw@postgres:5432/insightboard"
+      INSIGHT_SEARCH: elasticsearch
+      INSIGHT_ES_URL: "http://elasticsearch:9200"
+      INSIGHT_ASK_LLM: "${INSIGHT_ASK_LLM:-stub}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    ports:
+      - "8000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: src/dashboard
+      args:
+        VITE_DATA_API: http://localhost:8000
+    image: insightboard/dashboard:latest
+    ports:
+      - "5175:8080"
+    depends_on:
+      - data-service
+
+  admin:
+    build:
+      context: .
+      dockerfile: src/Admin.Web/Dockerfile
+    image: insightboard/admin:latest
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__AdminDb: "Data Source=/tmp/admin.db"
+    ports:
+      - "5256:8080"
+
+volumes:
+  postgres-data:
